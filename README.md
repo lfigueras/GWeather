@@ -21,6 +21,8 @@ User Experience (UX)
 -Enhance loading states and empty states
 -Improve feedback for errors and user actions
 -Make the interface feel smoother and more responsive
+-Fix minor UI glitches and inconsistencies
+-Weather history should display per user basis
 
 Code Maintainability
 -Refactor and simplify complex logic

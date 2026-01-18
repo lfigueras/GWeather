@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.lovely.gweather.MainActivity
 import com.lovely.gweather.data.local.entity.UserEntity
+import com.lovely.gweather.ui.auth.AuthValidator
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -175,44 +176,15 @@ fun RegistrationScreen(
                     // Register Button
                     Button(
                         onClick = {
-                            // Reset previous errorsnameError = null
-                            emailError = null
-                            passwordError = null
-                            confirmPasswordError = null
 
-                            var isValid = true
+                            nameError = AuthValidator.validateName(name)
+                            emailError = AuthValidator.validateEmail(email)
+                            passwordError = AuthValidator.validatePassword(password)
+                            confirmPasswordError = AuthValidator.validateConfirmPassword(password, confirmPassword)
 
-                            // 1. Validate Name
-                            if (name.isBlank()) {
-                                nameError = "Name cannot be empty"
-                                isValid = false
-                            }
 
-                            // 2. Validate Email
-                            if (email.isBlank()) {
-                                emailError = "Email cannot be empty"
-                                isValid = false
-                            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                                emailError = "Please enter a valid email"
-                                isValid = false
-                            }
+                            val isValid = nameError == null && emailError == null && passwordError == null && confirmPasswordError == null
 
-                            // 3. Validate Password
-                            if (password.isBlank()) {
-                                passwordError = "Password cannot be empty"
-                                isValid = false
-                            } else if (password.length < 6) {
-                                passwordError = "Password must be at least 6 characters"
-                                isValid = false
-                            }
-
-                            // 4. Validate Confirm Password
-                            if (password != confirmPassword) {
-                                confirmPasswordError = "Passwords do not match"
-                                isValid = false
-                            }
-
-                            // 5. If all validations pass, proceed with registration
                             if (isValid) {
                                 GlobalScope.launch {
                                     val user = UserEntity(0, name, email, password)

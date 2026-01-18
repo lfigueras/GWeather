@@ -102,6 +102,10 @@ dependencies {
     // OkHttp Logging Interceptor (optional but VERY useful for debugging)
     // This will let you see the raw API requests and responses in  Logcat
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    
+    //Roboelectric for unit tests
+    testImplementation("org.robolectric:robolectric:4.10.3")
+    // Use Google's Truth library for readable assertions
+    testImplementation("com.google.truth:truth:1.4.2") // Or a newer version
+
 
 }
