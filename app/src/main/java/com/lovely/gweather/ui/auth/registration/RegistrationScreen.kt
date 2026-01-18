@@ -1,6 +1,7 @@
 package com.yourapp.weather.screens
 
 import android.R.attr.icon
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -30,6 +33,12 @@ fun RegistrationScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showPrompt by remember { mutableStateOf(false) }
+
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+
     var context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -100,75 +109,119 @@ fun RegistrationScreen(
                     // Name Field
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it },
+                        onValueChange = { name = it; nameError = null },
                         label = { Text("Full Name") },
                         leadingIcon = {
                             Icon(Icons.Default.Person, "Name")
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        isError = nameError != null
                     )
-
+                    nameError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Email Field
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = { email = it; emailError = null },
                         label = { Text("Email Address") },
                         leadingIcon = {
                             Icon(Icons.Default.Email, "Email")
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        isError = emailError != null
                     )
-
+                    emailError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Password Field
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { password = it; passwordError = null },
                         label = { Text("Password") },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, "Password")
                         },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        isError = passwordError != null
                     )
-
+                    passwordError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Confirm Password Field
                     OutlinedTextField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
+                        onValueChange = { confirmPassword = it; confirmPasswordError = null },
                         label = { Text("Confirm Password") },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, "Confirm")
                         },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        isError = confirmPasswordError != null
                     )
-
+                    confirmPasswordError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Register Button
                     Button(
                         onClick = {
-                            GlobalScope.launch() {
-                                if (password == confirmPassword) {
-                                    val user = UserEntity(0, name, email, password)
-                                    MainActivity.Database.getInstance(context).userDao().insertAll(user)
-                                    scope.launch { onNavigateToSignIn() }
-                                } else{
-                                    showPrompt = true
-                                }
+                            // Reset previous errorsnameError = null
+                            emailError = null
+                            passwordError = null
+                            confirmPasswordError = null
 
+                            var isValid = true
+
+                            // 1. Validate Name
+                            if (name.isBlank()) {
+                                nameError = "Name cannot be empty"
+                                isValid = false
                             }
 
+                            // 2. Validate Email
+                            if (email.isBlank()) {
+                                emailError = "Email cannot be empty"
+                                isValid = false
+                            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                emailError = "Please enter a valid email"
+                                isValid = false
+                            }
+
+                            // 3. Validate Password
+                            if (password.isBlank()) {
+                                passwordError = "Password cannot be empty"
+                                isValid = false
+                            } else if (password.length < 6) {
+                                passwordError = "Password must be at least 6 characters"
+                                isValid = false
+                            }
+
+                            // 4. Validate Confirm Password
+                            if (password != confirmPassword) {
+                                confirmPasswordError = "Passwords do not match"
+                                isValid = false
+                            }
+
+                            // 5. If all validations pass, proceed with registration
+                            if (isValid) {
+                                GlobalScope.launch {
+                                    val user = UserEntity(0, name, email, password)
+                                    MainActivity.Database.getInstance(context).userDao().insertAll(user)
+                                    // Navigate on the main thread after DB operation
+                                    scope.launch { onNavigateToSignIn() }
+
+                                }
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -181,17 +234,6 @@ fun RegistrationScreen(
                         Text("Create Account")
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowForward, "Next")
-                    }
-                    if (showPrompt) {
-                        AlertDialog(
-                            onDismissRequest = { showPrompt = false },
-                            confirmButton = {
-                                TextButton(onClick = { showPrompt = false }) { Text("Try Again") }
-                            },
-                            title = { Text("Error") },
-                            text = { Text("The passwords you entered do not match. Please verify and try again.")},
-                            icon = { Icon(Icons.Default.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error)}
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

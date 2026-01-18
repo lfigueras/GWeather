@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.lovely.gweather.MainActivity
+import com.lovely.gweather.data.local.database.AppDatabase
 import com.lovely.gweather.data.local.entity.UserEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -104,7 +105,8 @@ fun AuthenticationScreen(
                             Icon(Icons.Default.Email, "Email")
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +120,8 @@ fun AuthenticationScreen(
                         },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -129,12 +132,7 @@ fun AuthenticationScreen(
                             val userEntity: UserEntity = MainActivity.Database.getInstance(context).userDao().findByName(email, password)
 
                             if (userEntity == null) {
-                                //mali
                                 showPrompt = true
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Incorrect credentials", Toast.LENGTH_SHORT).show()
-                                }
-
                             } else {
                                 scope.launch { onSignIn(email) }
                             }

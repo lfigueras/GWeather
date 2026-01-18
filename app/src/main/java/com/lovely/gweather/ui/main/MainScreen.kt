@@ -53,23 +53,48 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import android.provider.Settings
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.AcUnit
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Dehaze
+import androidx.compose.material.icons.filled.FilterDrama
+import androidx.compose.material.icons.filled.Thunderstorm
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
+import com.lovely.gweather.data.local.WeatherDao
+import com.lovely.gweather.data.local.entity.WeatherHistory
 import com.lovely.gweather.data.location.LocationManager
 import java.util.Calendar
+import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 @Composable
-fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel()) {
+fun MainScreen(
+    weatherDao: WeatherDao,
+    onSignOut: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val isNight = hour >= 18 || hour < 6
     val context = LocalContext.current
+    val mainViewModel: MainViewModel = viewModel(
+        factory = MainViewModelFactory(weatherDao)
+    )
+    val weatherHistoryList by mainViewModel.weatherHistory.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -201,93 +226,202 @@ fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel(
                 .padding(padding)
         ) {
             when (selectedTab) {
-                0 -> CurrentWeatherTab(isNight, addressLine = mainViewModel.addressLine)
-                1 -> WeatherListTab()
+                0 -> CurrentWeatherTab(isNight, addressLine = mainViewModel.addressLine,
+                    currentTemp = mainViewModel.currentTemp,
+                    weatherDescription = mainViewModel.weatherDescription,
+                    sunrise = mainViewModel.sunrise,
+                    sunset = mainViewModel.sunset,
+                    weatherIconCode = mainViewModel.weatherIcon)
+                1 ->   ForecastTab(history = weatherHistoryList)
             }
         }
     }
 }
 
 @Composable
-fun CurrentWeatherTab(isNight: Boolean, addressLine: String?) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Location
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+fun CurrentWeatherTab(isNight: Boolean, addressLine: String?,
+                      currentTemp: String?,
+                      weatherDescription: String?,
+                      sunrise: String?,
+                      sunset: String?,
+                      weatherIconCode: String?) {
+    val weatherIcon = when (weatherIconCode) {
+        // Day icons
+        "01d" -> Icons.Default.WbSunny
+        // Night icon (for clear sky)
+        "01n" -> Icons.Default.NightsStay
+        // Scattered clouds
+        "02d", "02n" -> Icons.Default.FilterDrama
+        // Cloudy
+        "03d", "03n", "04d", "04n" -> Icons.Default.Cloud
+        // Rain
+        "09d", "09n", "10d", "10n" -> Icons.Default.WaterDrop // Or a rain icon
+        // Thunderstorm
+        "11d", "11n" -> Icons.Default.Thunderstorm
+        // Snow
+        "13d", "13n" -> Icons.Default.AcUnit
+        // Mist
+        "50d", "50n" -> Icons.Default.Dehaze
+        // Default to night/day icon if code is unknown
+        else -> if (isNight) Icons.Default.NightsStay else Icons.Default.WbSunny
+    }
+
+    if (addressLine == null || currentTemp == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Default.LocationOn,
-                "Location",
-                tint = Color.White.copy(alpha = 0.8f)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = addressLine ?: "Fetching location...",
-                color = Color.White.copy(alpha = 0.9f)
-            )
+            CircularProgressIndicator()
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Weather Icon
-        Icon(
-            imageVector = if (isNight) Icons.Default.NightsStay else Icons.Default.WbSunny,
-            contentDescription = "Weather",
-            modifier = Modifier.size(96.dp),
-            tint = if (isNight) Color(0xFFC4B5FD) else Color(0xFFFBBF24)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Temperature
-        Text(
-            text = "24°",
-            style = MaterialTheme.typography.displayLarge,
-            color = Color.White
-        )
-
-        Text(
-            text = if (isNight) "Clear Night" else "Sunny",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Sun Times Card
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = Color.White.copy(alpha = 0.1f)
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Location
             Row(
-                modifier = Modifier.padding(24.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.WbTwilight, "Sunrise", tint = Color(0xFFFDE047))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Sunrise", color = Color.White.copy(0.7f))
-                    Text("6:24 AM", color = Color.White)
+                Icon(
+                    Icons.Default.LocationOn,
+                    "Location",
+                    tint = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = addressLine ?: "Fetching location...",
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Weather Icon
+            Icon(
+                imageVector = weatherIcon,
+                contentDescription = weatherDescription,
+                modifier = Modifier.size(96.dp)
+//                tint = if (isNight) Color(0xFFC4B5FD) else Color(0xFFFBBF24)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Temperature
+            Text(
+                text = currentTemp,
+                style = MaterialTheme.typography.displayLarge,
+                color = Color.White
+            )
+
+            Text(
+                text = weatherDescription ?: "Loading...",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Sun Times Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White.copy(alpha = 0.1f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.WbTwilight, "Sunrise", tint = Color(0xFFFDE047))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Sunrise", color = Color.White.copy(0.7f))
+                        Text(sunrise?:"..", color = Color.White)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.WbTwilight, "Sunset", tint = Color(0xFFFB923C))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Sunset", color = Color.White.copy(0.7f))
+                        Text(sunset ?: "..", color = Color.White)
+                    }
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.WbTwilight, "Sunset", tint = Color(0xFFFB923C))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Sunset", color = Color.White.copy(0.7f))
-                    Text("5:47 PM", color = Color.White)
-                }
+            }
+        }
+    }
+
+}
+
+@Composable
+fun ForecastTab(history: List<WeatherHistory>) {
+    if (history.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No weather history found. Open the app again later to build a history.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(history) { record ->
+                WeatherHistoryItem(record = record)
             }
         }
     }
 }
 
 @Composable
-fun WeatherListTab() {
-    // Weather list implementation
-    Text("Weather List", color = Color.White)
+fun WeatherHistoryItem(record: WeatherHistory) {
+    // Format the timestamp for display
+    val formattedDate = SimpleDateFormat("MMM dd, yyyy - h:mm a", Locale.getDefault())
+        .format(Date(record.timestamp))
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = record.cityName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = record.temperature,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = record.weatherDescription,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }

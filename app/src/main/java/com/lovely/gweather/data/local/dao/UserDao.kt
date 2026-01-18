@@ -23,4 +23,7 @@ interface UserDao {
 
     @Delete
     fun delete(user: UserEntity)
+
+    @Query("SELECT * FROM UserEntity WHERE email_address = :email LIMIT 1")
+    fun getUserByEmail(email: String): UserEntity?
 }

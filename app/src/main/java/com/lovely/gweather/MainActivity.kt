@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
     //Database
     object Database {
         fun getInstance(context: Context): AppDatabase{
-            return Room.databaseBuilder(context,AppDatabase::class.java, "gweather-db").build()
+            return Room.databaseBuilder(context,AppDatabase::class.java, "gweather-db").fallbackToDestructiveMigration().build()
         }
     }
 
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         } else {
             "auth" // Otherwise, start at AuthScreen
         }
+        val weatherDao = Database.getInstance(applicationContext).weatherDao()
         setContent {
             GWeatherTheme {
                 val locationPermissionsState = rememberMultiplePermissionsState(
@@ -65,7 +67,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         // If all permissions are granted, show the main app content.
                         locationPermissionsState.allPermissionsGranted -> {
-                            AppRoot(startDestination)
+                            AppRoot(startDestination, weatherDao)
                         }
 
                         // If user has denied permissions, show a rationale and a button to ask again.

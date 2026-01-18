@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lovely.gweather.data.local.WeatherDao
 import com.lovely.gweather.data.preferences.UserPreferences
 import com.lovely.gweather.ui.main.MainScreen
 import com.yourapp.weather.screens.AuthenticationScreen
@@ -14,7 +15,7 @@ import com.yourapp.weather.screens.RegistrationScreen
 
 
 @Composable
-fun AppRoot(startDestination: String) {
+fun AppRoot(startDestination: String, weatherDao: WeatherDao){
     val navController = rememberNavController()
     val context = LocalContext.current
     val userPreferences = UserPreferences(context.applicationContext)
@@ -38,6 +39,7 @@ fun AppRoot(startDestination: String) {
         }
         composable("main") {
             MainScreen(
+                weatherDao = weatherDao,
                 onSignOut = {
                     userPreferences.clearUserSession()
                     navController.navigate("auth"){
