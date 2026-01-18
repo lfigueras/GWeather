@@ -15,12 +15,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AuthenticationScreen(
-    onNavigateToRegistration: () -> Unit,
-    onSignIn: () -> Unit
+fun RegistrationScreen(
+    onNavigateToSignIn: () -> Unit,
+    onRegister: () -> Unit
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -28,9 +30,9 @@ fun AuthenticationScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF22D3EE), // cyan-400
+                        Color(0xFF60A5FA), // blue-400
                         Color(0xFF3B82F6), // blue-500
-                        Color(0xFF4F46E5)  // indigo-600
+                        Color(0xFFA855F7)  // purple-500
                     )
                 )
             ),
@@ -42,16 +44,18 @@ fun AuthenticationScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header with Weather Icon
+            // Header
             Surface(
                 modifier = Modifier.size(80.dp),
                 shape = RoundedCornerShape(24.dp),
                 color = Color.White.copy(alpha = 0.2f)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
-                        imageVector = Icons.Default.WbSunny,
-                        contentDescription = "Weather",
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "User",
                         modifier = Modifier.size(40.dp),
                         tint = Color.White
                     )
@@ -61,13 +65,13 @@ fun AuthenticationScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Welcome Back",
+                text = "Create Account",
                 style = MaterialTheme.typography.headlineLarge,
                 color = Color.White
             )
 
             Text(
-                text = "Sign in to continue to WeatherApp",
+                text = "Sign up to get started",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f)
             )
@@ -84,6 +88,21 @@ fun AuthenticationScreen(
                 Column(
                     modifier = Modifier.padding(32.dp)
                 ) {
+                    // Name Field
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Full Name") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, "Name")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Email Field
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -97,6 +116,7 @@ fun AuthenticationScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Password Field
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -109,43 +129,53 @@ fun AuthenticationScreen(
                         shape = RoundedCornerShape(16.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = { }) {
-                            Text("Forgot Password?")
-                        }
-                    }
-
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Confirm Password Field
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm Password") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, "Confirm")
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Register Button
                     Button(
-                        onClick = onSignIn,
+                        onClick = {
+                            if (password == confirmPassword) {
+                                onRegister()
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF06B6D4)
+                            containerColor = Color(0xFF3B82F6)
                         )
                     ) {
-                        Text("Sign In")
+                        Text("Create Account")
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowForward, "Next")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Sign In Link
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text("Don't have an account? ")
-                        TextButton(onClick = onNavigateToRegistration) {
-                            Text("Create Account")
+                        Text("Already have an account? ")
+                        TextButton(onClick = onNavigateToSignIn) {
+                            Text("Sign In")
                         }
                     }
                 }

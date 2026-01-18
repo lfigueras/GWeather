@@ -5,7 +5,9 @@ package com.lovely.gweather.data.model
  */
 data class UserCredentials(
     val email: String,
-    val password: String
+    val password: String,
+    val firstName: String? = null,
+    val lastName: String? = null
 )
 
 /**
