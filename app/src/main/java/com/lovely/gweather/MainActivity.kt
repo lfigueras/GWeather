@@ -19,6 +19,7 @@ import androidx.room.Room
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.lovely.gweather.data.local.database.AppDatabase
+import com.lovely.gweather.data.preferences.UserPreferences
 import com.lovely.gweather.ui.AppRoot
 import com.lovely.gweather.ui.permissions.PermanentlyDeniedScreen
 import com.lovely.gweather.ui.permissions.PermissionRationaleScreen
@@ -35,6 +36,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val userPreferences = UserPreferences(applicationContext)
+        // 3. DETERMINE the starting screen based on login state
+        val startDestination = if (userPreferences.isLoggedIn) {
+            "main" // If logged in, go straight to MainScreen
+        } else {
+            "auth" // Otherwise, start at AuthScreen
+        }
         setContent {
             GWeatherTheme {
                 val locationPermissionsState = rememberMultiplePermissionsState(
@@ -57,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         // If all permissions are granted, show the main app content.
                         locationPermissionsState.allPermissionsGranted -> {
-                            AppRoot()
+                            AppRoot(startDestination)
                         }
 
                         // If user has denied permissions, show a rationale and a button to ask again.

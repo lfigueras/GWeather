@@ -23,8 +23,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
-    onNavigateToSignIn: () -> Unit,
-    onRegister: () -> Unit
+    onNavigateToSignIn: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }

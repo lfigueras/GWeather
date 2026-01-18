@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun AuthenticationScreen(
     onNavigateToRegistration: () -> Unit,
-    onSignIn: () -> Unit
+    onSignIn: (email: String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -131,15 +131,12 @@ fun AuthenticationScreen(
                             if (userEntity == null) {
                                 //mali
                                 showPrompt = true
-                                Log.d("dave", "mali")
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Incorrect credentials", Toast.LENGTH_SHORT).show()
                                 }
 
                             } else {
-                                Log.d("dave", "tama")
-                                //tama
-                                scope.launch { onSignIn() }
+                                scope.launch { onSignIn(email) }
                             }
                         }
 

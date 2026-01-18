@@ -85,4 +85,23 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     annotationProcessor(libs.room.compiler)
+
+    //Local Unit Test
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
+
+
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // Moshi for parsing JSON into Kotlin objects
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+
+    // OkHttp Logging Interceptor (optional but VERY useful for debugging)
+    // This will let you see the raw API requests and responses in  Logcat
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+
 }

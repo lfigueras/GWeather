@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.lovely.gweather.data.location.exceptions.GpsNotEnabledException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -33,8 +34,9 @@ class LocationManager(
 
         // Guard clauses to ensure we can fetch a location
         if (!isGpsEnabled) {
-            Log.e("LocationManager", "GPS is not enabled.")
-            return null
+            Log.w("LocationManager", "GPS is not enabled. Throwing GpsNotEnabledException.")
+            // Instead of returning null, we throw an exception that the ViewModel can catch.
+            throw GpsNotEnabledException()
         }
         if (!hasFineLocationPermission && !hasCoarseLocationPermission) {
             Log.e("LocationManager", "Location permissions are not granted.")

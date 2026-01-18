@@ -3,37 +3,46 @@ package com.lovely.gweather.ui;
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lovely.gweather.data.preferences.UserPreferences
 import com.lovely.gweather.ui.main.MainScreen
 import com.yourapp.weather.screens.AuthenticationScreen
 import com.yourapp.weather.screens.RegistrationScreen
 
 
 @Composable
-fun AppRoot() {
+fun AppRoot(startDestination: String) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val userPreferences = UserPreferences(context.applicationContext)
+
     NavHost(
         navController = navController,
-        startDestination = "auth"
+        startDestination = startDestination
     ) {
         composable("registration") {
             RegistrationScreen(
-                onNavigateToSignIn = { navController.navigate("auth") },
-                onRegister = { navController.navigate("main") }
+                onNavigateToSignIn = { navController.navigate("auth") }
             )
         }
         composable("auth") {
             AuthenticationScreen(
                 onNavigateToRegistration = { navController.navigate("registration") },
-                onSignIn = {
+                onSignIn = { email ->
+                    userPreferences.saveUserSession(email)
                     navController.navigate("main") }
             )
         }
         composable("main") {
             MainScreen(
-                onSignOut = { navController.navigate("auth") }
+                onSignOut = {
+                    userPreferences.clearUserSession()
+                    navController.navigate("auth"){
+                        popUpTo("main") {inclusive = true}
+                    } }
             )
         }
     }

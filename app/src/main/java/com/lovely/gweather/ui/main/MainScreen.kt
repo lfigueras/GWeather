@@ -2,6 +2,7 @@
 
 package com.lovely.gweather.ui.main
 
+import android.content.Intent
 import android.location.Location
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,10 +37,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +52,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import android.provider.Settings
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
 import com.lovely.gweather.data.location.LocationManager
@@ -61,12 +70,63 @@ fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel(
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val isNight = hour >= 18 || hour < 6
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        val locationManager = LocationManager(
-            context = context,
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            // If the app is RESUMED (e.g., coming back from settings)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // Re-trigger the location fetch
+                val locationManager = LocationManager(
+                    context = context,
+                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+                )
+                mainViewModel.fetchLocation(context, locationManager)
+            }
+        }
+
+        // Add the observer to the lifecycle
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        // When the composable leaves the screen, remove the observer
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    val shouldShowGpsPrompt by mainViewModel.shouldPromptForGps.collectAsState()
+    if (shouldShowGpsPrompt) {
+        AlertDialog(
+            onDismissRequest = {
+                // Called when the user clicks outside the dialog or presses the back button
+                mainViewModel.onGpsPromptHandled()
+            },
+            title = { Text("Enable Location Services") },
+            text = { Text("To get weather updates for your current location, please enable GPS/Location Services.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Create an Intent to open the device's location settings
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        context.startActivity(intent)
+                        // Inform the ViewModel that the prompt has been handled
+                        mainViewModel.onGpsPromptHandled()
+                    }
+                ) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // If the user cancels, just dismiss the dialog
+                        mainViewModel.onGpsPromptHandled()
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
         )
-        mainViewModel.fetchLocation(locationManager)
     }
     val gradientColors = if (isNight) {
         listOf(
@@ -141,7 +201,7 @@ fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel(
                 .padding(padding)
         ) {
             when (selectedTab) {
-                0 -> CurrentWeatherTab(isNight, location = mainViewModel.location)
+                0 -> CurrentWeatherTab(isNight, addressLine = mainViewModel.addressLine)
                 1 -> WeatherListTab()
             }
         }
@@ -149,7 +209,7 @@ fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel(
 }
 
 @Composable
-fun CurrentWeatherTab(isNight: Boolean, location: Location?) {
+fun CurrentWeatherTab(isNight: Boolean, addressLine: String?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -166,17 +226,10 @@ fun CurrentWeatherTab(isNight: Boolean, location: Location?) {
                 tint = Color.White.copy(alpha = 0.8f)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            if (location != null) {
-                Text(
-                    "Lat: ${location.latitude}, Lon: ${location.longitude}",
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-            } else {
-                Text(
-                    "Fetching location...",
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-            }
+            Text(
+                text = addressLine ?: "Fetching location...",
+                color = Color.White.copy(alpha = 0.9f)
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
