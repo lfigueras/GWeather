@@ -1,5 +1,7 @@
 package com.yourapp.weather.screens
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,8 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.lovely.gweather.MainActivity
+import com.lovely.gweather.data.local.entity.UserEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AuthenticationScreen(
@@ -21,6 +30,9 @@ fun AuthenticationScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var showPrompt by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -112,7 +124,26 @@ fun AuthenticationScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = onSignIn,
+                        onClick = {
+                            GlobalScope.launch() {
+                            val userEntity: UserEntity = MainActivity.Database.getInstance(context).userDao().findByName(email, password)
+
+                            if (userEntity == null) {
+                                //mali
+                                showPrompt = true
+                                Log.d("dave", "mali")
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Incorrect credentials", Toast.LENGTH_SHORT).show()
+                                }
+
+                            } else {
+                                Log.d("dave", "tama")
+                                //tama
+                                scope.launch { onSignIn() }
+                            }
+                        }
+
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -124,6 +155,30 @@ fun AuthenticationScreen(
                         Text("Sign In")
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowForward, "Next")
+                    }
+                    if (showPrompt) {
+                        AlertDialog(
+                            onDismissRequest = { showPrompt = false },
+                            confirmButton = {
+                                TextButton(onClick = { showPrompt = false }) {
+                                    Text("OK")
+                                }
+                            },
+                            title = {
+                                Text("Account Not Found")
+                            },
+                            text = {
+                                Text("We couldn’t find an account matching the details you provided. Please check your information or sign up for a new account.")
+                            },
+                            icon = {
+                                Icon(
+                                    Icons.Default.Error,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        )
+
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

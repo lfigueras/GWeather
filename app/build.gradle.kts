@@ -2,6 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
+}
+
+room{
+    schemaDirectory("$projectDir/schemas")
 }
 
 android {
@@ -73,4 +79,10 @@ dependencies {
 
     //Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.30.1")
+
+    //Room Database
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    annotationProcessor(libs.room.compiler)
 }

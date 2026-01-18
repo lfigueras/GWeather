@@ -12,8 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.lovely.gweather.MainActivity
+import com.lovely.gweather.data.local.entity.UserEntity
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +31,8 @@ fun RegistrationScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showPrompt by remember { mutableStateOf(false) }
+    var context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -152,11 +159,17 @@ fun RegistrationScreen(
                     // Register Button
                     Button(
                         onClick = {
-                            if (password == confirmPassword) {
-                                onRegister()
-                            } else{
-                                showPrompt = true
+                            GlobalScope.launch() {
+                                if (password == confirmPassword) {
+                                    val user = UserEntity(0, name, email, password)
+                                    MainActivity.Database.getInstance(context).userDao().insertAll(user)
+                                    scope.launch { onNavigateToSignIn() }
+                                } else{
+                                    showPrompt = true
+                                }
+
                             }
+
                         },
                         modifier = Modifier
                             .fillMaxWidth()

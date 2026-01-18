@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalPermissionsApi::class)
 package com.lovely.gweather
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,14 +15,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.room.Room
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.lovely.gweather.data.local.database.AppDatabase
 import com.lovely.gweather.ui.AppRoot
 import com.lovely.gweather.ui.permissions.PermanentlyDeniedScreen
 import com.lovely.gweather.ui.permissions.PermissionRationaleScreen
 import com.lovely.gweather.ui.theme.GWeatherTheme
 
 class MainActivity : ComponentActivity() {
+    //Database
+    object Database {
+        fun getInstance(context: Context): AppDatabase{
+            return Room.databaseBuilder(context,AppDatabase::class.java, "gweather-db").build()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
