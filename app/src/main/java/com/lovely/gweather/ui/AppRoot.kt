@@ -27,7 +27,8 @@ fun AppRoot() {
         composable("auth") {
             AuthenticationScreen(
                 onNavigateToRegistration = { navController.navigate("registration") },
-                onSignIn = { navController.navigate("main") }
+                onSignIn = {
+                    navController.navigate("main") }
             )
         }
         composable("main") {

@@ -67,7 +67,7 @@ fun AuthenticationScreen(
             )
 
             Text(
-                text = "Sign in to continue to WeatherApp",
+                text = "Sign in to continue to GWeather",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f)
             )
@@ -108,17 +108,6 @@ fun AuthenticationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = { }) {
-                            Text("Forgot Password?")
-                        }
-                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 

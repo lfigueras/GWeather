@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.lovely.gweather.ui.main
 
+import android.location.Location
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,17 +47,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
+import com.lovely.gweather.data.location.LocationManager
 import java.util.Calendar
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(onSignOut: () -> Unit) {
+fun MainScreen(onSignOut: () -> Unit,  mainViewModel: MainViewModel = viewModel()) {
     var selectedTab by remember { mutableStateOf(0) }
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val isNight = hour >= 18 || hour < 6
-
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        val locationManager = LocationManager(
+            context = context,
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+        )
+        mainViewModel.fetchLocation(locationManager)
+    }
     val gradientColors = if (isNight) {
         listOf(
             Color(0xFF312E81), // indigo-900
@@ -81,7 +95,7 @@ fun MainScreen(onSignOut: () -> Unit) {
                             tint = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("WeatherApp", color = Color.White)
+                        Text("GWeather", color = Color.White)
                     }
                 },
                 actions = {
@@ -127,7 +141,7 @@ fun MainScreen(onSignOut: () -> Unit) {
                 .padding(padding)
         ) {
             when (selectedTab) {
-                0 -> CurrentWeatherTab(isNight)
+                0 -> CurrentWeatherTab(isNight, location = mainViewModel.location)
                 1 -> WeatherListTab()
             }
         }
@@ -135,7 +149,7 @@ fun MainScreen(onSignOut: () -> Unit) {
 }
 
 @Composable
-fun CurrentWeatherTab(isNight: Boolean) {
+fun CurrentWeatherTab(isNight: Boolean, location: Location?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -152,10 +166,17 @@ fun CurrentWeatherTab(isNight: Boolean) {
                 tint = Color.White.copy(alpha = 0.8f)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "San Francisco, United States",
-                color = Color.White.copy(alpha = 0.9f)
-            )
+            if (location != null) {
+                Text(
+                    "Lat: ${location.latitude}, Lon: ${location.longitude}",
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            } else {
+                Text(
+                    "Fetching location...",
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))

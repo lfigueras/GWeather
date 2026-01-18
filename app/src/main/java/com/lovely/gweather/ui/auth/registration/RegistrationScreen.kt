@@ -1,5 +1,6 @@
 package com.yourapp.weather.screens
 
+import android.R.attr.icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
     onNavigateToSignIn: () -> Unit,
@@ -23,6 +25,7 @@ fun RegistrationScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var showPrompt by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -151,6 +154,8 @@ fun RegistrationScreen(
                         onClick = {
                             if (password == confirmPassword) {
                                 onRegister()
+                            } else{
+                                showPrompt = true
                             }
                         },
                         modifier = Modifier
@@ -164,6 +169,17 @@ fun RegistrationScreen(
                         Text("Create Account")
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowForward, "Next")
+                    }
+                    if (showPrompt) {
+                        AlertDialog(
+                            onDismissRequest = { showPrompt = false },
+                            confirmButton = {
+                                TextButton(onClick = { showPrompt = false }) { Text("Try Again") }
+                            },
+                            title = { Text("Error") },
+                            text = { Text("The passwords you entered do not match. Please verify and try again.")},
+                            icon = { Icon(Icons.Default.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error)}
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

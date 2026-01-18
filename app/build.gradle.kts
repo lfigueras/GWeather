@@ -67,4 +67,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // Use the latest version
     val nav_version = "2.9.6"
     implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    //GMS - Google Mobile Services for location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    //Permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1")
 }
