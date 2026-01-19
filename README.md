@@ -25,6 +25,7 @@ User Experience (UX)
 -Weather history should display per user basis
 
 Code Maintainability
+-Consistency in the structure using MVVM(Repository and ViewModels for AuthScreen and RegistrationScreen is missing)
 -Refactor and simplify complex logic
 -Move hardcoded values to appropriate resources
 -Add meaningful comments and follow best practices for long-term scalability
