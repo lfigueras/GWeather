@@ -1,8 +1,10 @@
 package com.yourapp.weather.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,13 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.lovely.gweather.MainActivity
-import com.lovely.gweather.data.local.database.AppDatabase
-import com.lovely.gweather.data.local.entity.UserEntity
+import com.lovely.gweather.data.auth.CredentialHasher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,161 +36,142 @@ fun AuthenticationScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var showPrompt by remember { mutableStateOf(false) }
+    var isSigningIn by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF22D3EE), // cyan-400
-                        Color(0xFF3B82F6), // blue-500
-                        Color(0xFF4F46E5)  // indigo-600
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
+            .background(Brush.verticalGradient(listOf(Color(0xFFE8F2F0), Color(0xFFF8F6F0))))
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header with Weather Icon
-            Surface(
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White.copy(alpha = 0.2f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Surface(color = Color(0xFF247A78), shape = RoundedCornerShape(8.dp)) {
                     Icon(
-                        imageVector = Icons.Default.WbSunny,
-                        contentDescription = "Weather",
-                        modifier = Modifier.size(40.dp),
-                        tint = Color.White
+                        Icons.Default.WbSunny,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.padding(10.dp).size(24.dp)
                     )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("GWeather", color = Color(0xFF18333A), style = MaterialTheme.typography.titleLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                    Text("LOCAL WEATHER", color = Color(0xFF61767A), style = MaterialTheme.typography.labelSmall)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(28.dp))
 
-            Text(
-                text = "Welcome Back",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Color.White
-            )
-
-            Text(
-                text = "Sign in to continue to GWeather",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Form Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White,
-                shadowElevation = 8.dp
+                shape = RoundedCornerShape(8.dp),
+                color = Color.White
             ) {
-                Column(
-                    modifier = Modifier.padding(32.dp)
-                ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text("Welcome back", color = Color(0xFF18333A), style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Sign in to check your local weather.", color = Color(0xFF61767A), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(20.dp))
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Email Address") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Email, "Email")
-                        },
+                        label = { Text("Email address") },
+                        leadingIcon = { Icon(Icons.Default.Email, null, tint = Color(0xFF247A78)) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF247A78), focusedLabelColor = Color(0xFF247A78), cursorColor = Color(0xFF247A78))
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Lock, "Password")
-                        },
+                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color(0xFF247A78)) },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF247A78), focusedLabelColor = Color(0xFF247A78), cursorColor = Color(0xFF247A78))
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(18.dp))
 
                     Button(
                         onClick = {
-                            GlobalScope.launch() {
-                            val userEntity: UserEntity = MainActivity.Database.getInstance(context).userDao().findByName(email, password)
+                            if (isSigningIn) return@Button
+                            scope.launch {
+                                isSigningIn = true
+                                try {
+                                    val normalizedEmail = email.trim().lowercase()
+                                    val user = MainActivity.Database.getInstance(context)
+                                        .userDao()
+                                        .getUserByEmail(normalizedEmail)
+                                    val passwordMatches = user?.passwordHash?.let { hash ->
+                                        withContext(Dispatchers.Default) {
+                                            CredentialHasher.verify(password, hash, user.passwordSalt)
+                                        }
+                                    } ?: false
 
-                            if (userEntity == null) {
-                                showPrompt = true
-                            } else {
-                                scope.launch { onSignIn(email) }
-                            }
-                        }
-
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF06B6D4)
-                        )
-                    ) {
-                        Text("Sign In")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(Icons.Default.ArrowForward, "Next")
-                    }
-                    if (showPrompt) {
-                        AlertDialog(
-                            onDismissRequest = { showPrompt = false },
-                            confirmButton = {
-                                TextButton(onClick = { showPrompt = false }) {
-                                    Text("OK")
+                                    if (passwordMatches) {
+                                        onSignIn(normalizedEmail)
+                                    } else {
+                                        showPrompt = true
+                                    }
+                                } catch (exception: Exception) {
+                                    Toast.makeText(context, "Sign in failed. Please try again.", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isSigningIn = false
                                 }
-                            },
-                            title = {
-                                Text("Account Not Found")
-                            },
-                            text = {
-                                Text("We couldn’t find an account matching the details you provided. Please check your information or sign up for a new account.")
-                            },
-                            icon = {
-                                Icon(
-                                    Icons.Default.Error,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
                             }
-                        )
-
+                        },
+                        enabled = !isSigningIn,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF247A78))
+                    ) {
+                        Text(if (isSigningIn) "Signing in..." else "Sign in")
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Don't have an account? ")
+                        Text("New to GWeather?", color = Color(0xFF61767A), style = MaterialTheme.typography.bodyMedium)
                         TextButton(onClick = onNavigateToRegistration) {
-                            Text("Create Account")
+                            Text("Create account", color = Color(0xFF247A78))
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showPrompt) {
+        AlertDialog(
+            onDismissRequest = { showPrompt = false },
+            confirmButton = {
+                TextButton(onClick = { showPrompt = false }) { Text("OK") }
+            },
+            title = { Text("Sign-in failed") },
+            text = { Text("Check your email and password, or create a new account.") }
+        )
     }
 }

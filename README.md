@@ -1,36 +1,43 @@
 # GWeather
-GWeather helps you stay ahead of the weather with accurate, real-time updates and forecasts designed for everyday use.
 
+GWeather is an Android weather app that uses the device's location and OpenWeather to show current conditions. It also keeps a local history for each signed-in account.
 
-### Current Status
+<img src="docs/images/current-weather.png" alt="GWeather current weather screen" width="320">
 
-The application is fully functional and meets all core requirements. It successfully:
+## Features
 
-- Fetches live weather data
-- Manages user authentication
-- Stores and displays a history of weather reports
+- Current temperature, conditions, sunrise, and sunset.
+- Optional location access; saved history remains available without it.
+- Local account registration and sign-in, with salted password hashes.
+- Per-account weather history stored on the device.
+- Loading, network, API-key, and permission error states with retry actions.
 
-### Next Steps
-To elevate the project from a functional prototype to a production-ready application, the next focus areas would be:
+Accounts and history are stored locally on the device. There is no server-side account recovery or cross-device sync.
 
-Robustness
--Improve error handling and edge-case management (e.g., no internet connection, permission denial)
--Add stronger input validation and defensive checks
+## OpenWeather Setup
 
-User Experience (UX)
--Enhance loading states and empty states
--Improve feedback for errors and user actions
--Make the interface feel smoother and more responsive
--Fix minor UI glitches and inconsistencies
--Weather history should display per user basis
+Set `OPENWEATHER_API_KEY` in the Git-ignored `local.properties` file for Android Studio builds:
 
-Code Maintainability
--Consistency in the structure using MVVM(Repository and ViewModels for AuthScreen and RegistrationScreen is missing)
--Refactor and simplify complex logic
--Move hardcoded values to appropriate resources
--Add meaningful comments and follow best practices for long-term scalability
+```properties
+OPENWEATHER_API_KEY=your_key
+```
 
+Alternatively, provide it as a Gradle property or environment variable:
 
-Setup:
-Open  `app/src/main/java/com/lovely/gweather/data/network/ApiConstants.kt`
-Replace`"YOUR_API_KEY"`with a free API key from **OpenWeather**
+```sh
+./gradlew assembleDebug -POPENWEATHER_API_KEY=your_key
+```
+
+The API key is included in the app package, so treat it as a public client credential. Restrict it and monitor usage in your OpenWeather account. Never commit the key to source control.
+
+## Build and Test
+
+```sh
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
+./gradlew assembleRelease
+```
+
+## Architecture Note
+
+Authentication and registration currently access Room directly. Moving account persistence behind repositories and view models would improve separation as the app grows.

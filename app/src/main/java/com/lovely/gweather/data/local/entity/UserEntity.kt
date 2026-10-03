@@ -9,5 +9,6 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Int =0,
     @ColumnInfo(name = "full_name") var fullName: String?,
     @ColumnInfo(name = "email_address") var emailAddress: String?,
-    @ColumnInfo(name = "password") var password: String?
+    @ColumnInfo(name = "password") var passwordHash: String?,
+    @ColumnInfo(name = "password_salt", defaultValue = "''") var passwordSalt: String = ""
 )
