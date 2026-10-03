@@ -2,7 +2,7 @@
 
 GWeather is an Android weather app that uses the device's location and OpenWeather to show current conditions. It also keeps a local history for each signed-in account.
 
-![GWeather current weather screen](docs/images/current-weather.png)
+<img src="docs/images/current-weather.png" alt="GWeather current weather screen" width="320">
 
 ## Features
 
