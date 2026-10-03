@@ -24,6 +24,15 @@ val openWeatherApiKey = providers.gradleProperty("OPENWEATHER_API_KEY")
     .orElse(localProperties.getProperty("OPENWEATHER_API_KEY").orEmpty())
     .getOrElse("")
 
+val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE").orEmpty()
+val releaseStorePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD").orEmpty()
+val releaseKeyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS").orEmpty()
+val releaseKeyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD").orEmpty()
+val hasReleaseSigning = releaseStoreFile.isNotEmpty() &&
+    releaseStorePassword.isNotEmpty() &&
+    releaseKeyAlias.isNotEmpty() &&
+    releaseKeyPassword.isNotEmpty()
+
 android {
     namespace = "com.lovely.gweather"
     compileSdk = 36
@@ -32,15 +41,32 @@ android {
         applicationId = "com.lovely.gweather"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "OPENWEATHER_API_KEY", "\"$openWeatherApiKey\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
