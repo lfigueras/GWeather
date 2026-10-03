@@ -13,6 +13,9 @@ interface WeatherDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWeatherHistory(weatherHistory: WeatherHistory)
 
-    @Query("SELECT * FROM weather_history ORDER BY timestamp DESC")
-    fun getAllWeatherHistory(): Flow<List<WeatherHistory>>
+    @Query("SELECT * FROM weather_history WHERE userEmail = :userEmail ORDER BY timestamp DESC")
+    fun getWeatherHistory(userEmail: String): Flow<List<WeatherHistory>>
+
+    @Query("SELECT * FROM weather_history WHERE userEmail = :userEmail ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestWeatherHistory(userEmail: String): WeatherHistory?
 }

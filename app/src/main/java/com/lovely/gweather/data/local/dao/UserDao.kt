@@ -14,16 +14,16 @@ interface UserDao {
     @Query("SELECT * FROM UserEntity WHERE id IN (:userIds)")
     fun loadAllByIds(userIds: IntArray): List<UserEntity>
 
-    @Query("SELECT * FROM UserEntity WHERE email_address = :first AND " +
-            "password = :last LIMIT 1")
-    fun findByName(first: String, last: String): UserEntity
+        @Query("SELECT * FROM UserEntity WHERE email_address = :email LIMIT 1")
+        suspend fun getUserByEmail(email: String): UserEntity?
 
     @Insert
-    fun insertAll(vararg users: UserEntity)
+        suspend fun insertAll(vararg users: UserEntity)
+
+        @Query("UPDATE UserEntity SET password = :passwordHash, password_salt = :passwordSalt WHERE id = :userId")
+        suspend fun updateCredentials(userId: Int, passwordHash: String, passwordSalt: String)
 
     @Delete
     fun delete(user: UserEntity)
 
-    @Query("SELECT * FROM UserEntity WHERE email_address = :email LIMIT 1")
-    fun getUserByEmail(email: String): UserEntity?
 }

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +11,18 @@ plugins {
 room{
     schemaDirectory("$projectDir/schemas")
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.isFile) {
+        localPropertiesFile.inputStream().use { input -> load(input) }
+    }
+}
+
+val openWeatherApiKey = providers.gradleProperty("OPENWEATHER_API_KEY")
+    .orElse(providers.environmentVariable("OPENWEATHER_API_KEY"))
+    .orElse(localProperties.getProperty("OPENWEATHER_API_KEY").orEmpty())
+    .getOrElse("")
 
 android {
     namespace = "com.lovely.gweather"
@@ -22,6 +36,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "OPENWEATHER_API_KEY", "\"$openWeatherApiKey\"")
     }
 
     buildTypes {
@@ -42,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

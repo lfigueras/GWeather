@@ -1,6 +1,7 @@
 package com.lovely.gweather.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "weather_history")
@@ -10,5 +11,6 @@ data class WeatherHistory(
     val cityName: String,
     val temperature: String,
     val weatherDescription: String,
+    @ColumnInfo(defaultValue = "''") val userEmail: String,
     val timestamp: Long = System.currentTimeMillis()
 )

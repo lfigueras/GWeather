@@ -45,38 +45,40 @@ class LocationManager(
 
 
         return suspendCancellableCoroutine { cont ->
-            fusedLocationProviderClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    if (location != null) {
-                        // If we get a cached location, use it immediately
-                        Log.d("LocationManager", "Got location from cache: $location")
-                        if (cont.isActive) cont.resume(location)
+            val cancellationToken = CancellationTokenSource()
+            val priority = if (hasFineLocationPermission) {
+                Priority.PRIORITY_HIGH_ACCURACY
+            } else {
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY
+            }
+
+            fun useCachedLocation() {
+                fusedLocationProviderClient.lastLocation
+                    .addOnSuccessListener { cachedLocation ->
+                        Log.d("LocationManager", "Using cached location as fallback: $cachedLocation")
+                        if (cont.isActive) cont.resume(cachedLocation)
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("LocationManager", "Failed to get cached location", exception)
+                        if (cont.isActive) cont.resume(null)
+                    }
+            }
+
+            fusedLocationProviderClient.getCurrentLocation(priority, cancellationToken.token)
+                .addOnSuccessListener { currentLocation ->
+                    if (currentLocation != null) {
+                        Log.d("LocationManager", "Got current location: $currentLocation")
+                        if (cont.isActive) cont.resume(currentLocation)
                     } else {
-                        // If cached location is null, we must request the current location
-                        Log.d("LocationManager", "Cached location is null. Requesting new location...")
-                        val cancellationToken = CancellationTokenSource()
-
-                        fusedLocationProviderClient.getCurrentLocation(
-                            Priority.PRIORITY_HIGH_ACCURACY, // Request a fresh, accurate location
-                            cancellationToken.token
-                        ).addOnSuccessListener { newLocation: Location? ->
-                            Log.d("LocationManager", "Got new location: $newLocation")
-                            if (cont.isActive) cont.resume(newLocation)
-                        }.addOnFailureListener { e ->
-                            Log.e("LocationManager", "Failed to get new location", e)
-                            if (cont.isActive) cont.resume(null)
-                        }
-
-                        // If the coroutine is cancelled, cancel the location request
-                        cont.invokeOnCancellation {
-                            cancellationToken.cancel()
-                        }
+                        useCachedLocation()
                     }
                 }
-                .addOnFailureListener { e ->
-                    Log.e("LocationManager", "Failed to get location", e)
-                    if (cont.isActive) cont.resume(null)
+                .addOnFailureListener { exception ->
+                    Log.w("LocationManager", "Fresh location unavailable; using cached location", exception)
+                    useCachedLocation()
                 }
+
+            cont.invokeOnCancellation { cancellationToken.cancel() }
         }
     }
 }

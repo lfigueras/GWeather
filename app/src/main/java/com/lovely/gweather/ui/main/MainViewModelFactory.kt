@@ -4,11 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.lovely.gweather.data.local.WeatherDao
 
-class MainViewModelFactory(private val weatherDao: WeatherDao) : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val weatherDao: WeatherDao,
+    private val userEmail: String
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(weatherDao) as T
+            return MainViewModel(weatherDao, userEmail) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -40,6 +40,7 @@ fun AppRoot(startDestination: String, weatherDao: WeatherDao){
         composable("main") {
             MainScreen(
                 weatherDao = weatherDao,
+                userEmail = userPreferences.loggedInUserIdentifier.orEmpty(),
                 onSignOut = {
                     userPreferences.clearUserSession()
                     navController.navigate("auth"){
